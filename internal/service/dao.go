@@ -284,3 +284,27 @@ func deletePlaylist(ctx context.Context, tx *sql.Tx, playlistIds []string) (int,
 
 	return int(rowsAffected), nil
 }
+
+func addPlaylist(ctx context.Context, tx *sql.Tx, playlist *data.PlayList) error {
+	if playlist.PlaylistId == "" {
+		playlist.PlaylistId = uuid.Must(uuid.NewV7()).String()
+	}
+
+	query := "INSERT INTO playlist (playlist_id, user_id, description) VALUES (?, ?, ?)"
+	_, err := tx.ExecContext(ctx, query, playlist.PlaylistId, playlist.UserId, playlist.Description)
+	if err != nil {
+		return fmt.Errorf("failed to add playlist: %w", err)
+	}
+
+	return nil
+}
+
+func updatePlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID, description string) error {
+	query := "UPDATE playlist SET description = ? WHERE playlist_id = ? AND user_id = ?"
+	_, err := tx.ExecContext(ctx, query, description, playlistID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update playlist: %w", err)
+	}
+
+	return nil
+}

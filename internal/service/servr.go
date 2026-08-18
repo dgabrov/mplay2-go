@@ -224,3 +224,39 @@ func (s *Servr) DeletePlaylist(ctx context.Context, playlistIds []string) (int, 
 
 	return count, nil
 }
+
+func (s *Servr) AddPlaylist(ctx context.Context, playlist *data.PlayList) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := addPlaylist(ctx, tx, playlist); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Servr) UpdatePlaylist(ctx context.Context, userID, playlistID, description string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := updatePlaylist(ctx, tx, userID, playlistID, description); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}

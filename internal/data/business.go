@@ -15,3 +15,8 @@ type PlayList struct {
 	UserId      string
 	Description string
 }
+
+type DescriptionUpdate struct {
+	Id          string
+	Description string
+}
