@@ -150,3 +150,77 @@ func (s *Servr) SearchPlaylist(ctx context.Context, userID string, searchTerms [
 
 	return results, nil
 }
+
+func (s *Servr) VerifyMediaOwnership(ctx context.Context, userID string, mediaIds []string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := verifyMediaOwnership(ctx, tx, userID, mediaIds); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Servr) DeleteMedia(ctx context.Context, mediaIds []string) (int, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	count, err := deleteMedia(ctx, tx, mediaIds)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Servr) VerifyPlaylistOwnership(ctx context.Context, userID string, playlistIds []string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := verifyPlaylistOwnership(ctx, tx, userID, playlistIds); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Servr) DeletePlaylist(ctx context.Context, playlistIds []string) (int, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	count, err := deletePlaylist(ctx, tx, playlistIds)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

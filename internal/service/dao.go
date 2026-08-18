@@ -174,3 +174,113 @@ func searchPlaylist(ctx context.Context, tx *sql.Tx, userID string, searchTerms 
 
 	return results, nil
 }
+
+func verifyMediaOwnership(ctx context.Context, tx *sql.Tx, userID string, mediaIds []string) error {
+	if len(mediaIds) == 0 {
+		return nil
+	}
+
+	placeholders := make([]string, len(mediaIds))
+	args := make([]interface{}, len(mediaIds)+1)
+	args[0] = userID
+
+	for i, id := range mediaIds {
+		placeholders[i] = "?"
+		args[i+1] = id
+	}
+
+	query := "SELECT COUNT(*) FROM media WHERE user_id = ? AND media_id IN (" + strings.Join(placeholders, ",") + ")"
+	var count int
+	err := tx.QueryRowContext(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to verify media ownership: %w", err)
+	}
+
+	if count != len(mediaIds) {
+		return fmt.Errorf("some media ids do not belong to this user or do not exist")
+	}
+
+	return nil
+}
+
+func deleteMedia(ctx context.Context, tx *sql.Tx, mediaIds []string) (int, error) {
+	if len(mediaIds) == 0 {
+		return 0, nil
+	}
+
+	placeholders := make([]string, len(mediaIds))
+	args := make([]interface{}, len(mediaIds))
+
+	for i, id := range mediaIds {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	query := "DELETE FROM media WHERE media_id IN (" + strings.Join(placeholders, ",") + ")"
+	result, err := tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete media: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	return int(rowsAffected), nil
+}
+
+func verifyPlaylistOwnership(ctx context.Context, tx *sql.Tx, userID string, playlistIds []string) error {
+	if len(playlistIds) == 0 {
+		return nil
+	}
+
+	placeholders := make([]string, len(playlistIds))
+	args := make([]interface{}, len(playlistIds)+1)
+	args[0] = userID
+
+	for i, id := range playlistIds {
+		placeholders[i] = "?"
+		args[i+1] = id
+	}
+
+	query := "SELECT COUNT(*) FROM playlist WHERE user_id = ? AND playlist_id IN (" + strings.Join(placeholders, ",") + ")"
+	var count int
+	err := tx.QueryRowContext(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to verify playlist ownership: %w", err)
+	}
+
+	if count != len(playlistIds) {
+		return fmt.Errorf("some playlist ids do not belong to this user or do not exist")
+	}
+
+	return nil
+}
+
+func deletePlaylist(ctx context.Context, tx *sql.Tx, playlistIds []string) (int, error) {
+	if len(playlistIds) == 0 {
+		return 0, nil
+	}
+
+	placeholders := make([]string, len(playlistIds))
+	args := make([]interface{}, len(playlistIds))
+
+	for i, id := range playlistIds {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	query := "DELETE FROM playlist WHERE playlist_id IN (" + strings.Join(placeholders, ",") + ")"
+	result, err := tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	return int(rowsAffected), nil
+}
