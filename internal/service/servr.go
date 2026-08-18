@@ -32,7 +32,7 @@ func (s *Servr) GetUserByProvidedId(ctx context.Context, providedUserID string) 
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+		return nil, err
 	}
 
 	return user, nil
@@ -50,7 +50,7 @@ func (s *Servr) CreateUser(ctx context.Context, user *data.User) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return err
 	}
 
 	return nil
@@ -69,8 +69,46 @@ func (s *Servr) CreateSession(ctx context.Context, userID, token string) (*data.
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+		return nil, err
 	}
 
 	return session, nil
+}
+
+func (s *Servr) ValidateToken(ctx context.Context, token string) (string, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	userID, err := validateToken(ctx, tx, token)
+	if err != nil {
+		return "", err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return "", err
+	}
+
+	return userID, nil
+}
+
+func (s *Servr) GetNextSequenceValue(ctx context.Context) (int64, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	seqval, err := getNextSequenceValue(ctx, tx)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return seqval, nil
 }

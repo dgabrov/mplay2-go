@@ -52,3 +52,42 @@ func createSession(ctx context.Context, tx *sql.Tx, userID, token string, tokenV
 		ExpiryDt:   expiryDt.Format(time.RFC3339),
 	}, nil
 }
+
+func validateToken(ctx context.Context, tx *sql.Tx, token string) (string, error) {
+	var userID string
+	var expiredInd string
+	var expiryDt time.Time
+
+	query := "SELECT user_id, expired_ind, expiry_dt FROM session WHERE token = ?"
+	err := tx.QueryRowContext(ctx, query, token).Scan(&userID, &expiredInd, &expiryDt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("invalid token or token expired")
+		}
+		return "", fmt.Errorf("failed to validate token: %w", err)
+	}
+
+	if expiredInd == "Y" || time.Now().After(expiryDt) {
+		return "", fmt.Errorf("invalid token or token expired")
+	}
+
+	return userID, nil
+}
+
+func getNextSequenceValue(ctx context.Context, tx *sql.Tx) (int64, error) {
+	var seqval int64
+	query := "SELECT seqval FROM seqvalues WHERE id = '1' FOR UPDATE"
+	err := tx.QueryRowContext(ctx, query).Scan(&seqval)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get sequence value: %w", err)
+	}
+
+	newSeqval := seqval + 1
+	updateQuery := "UPDATE seqvalues SET seqval = ? WHERE id = '1'"
+	_, err = tx.ExecContext(ctx, updateQuery, newSeqval)
+	if err != nil {
+		return 0, fmt.Errorf("failed to update sequence value: %w", err)
+	}
+
+	return newSeqval, nil
+}

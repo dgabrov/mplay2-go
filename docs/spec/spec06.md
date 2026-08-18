@@ -1,0 +1,3 @@
+- create method in servr that searches by token in session
+- if token not in database, or current date is bigger than expiry_dt, or if expiry_ind is 'Y' then return error 'invalid token or token expired'
+- the method returns userId, error
