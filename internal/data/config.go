@@ -1,11 +1,12 @@
 package data
 
 type ConfigData struct {
-	Version string       `json:"version"`
-	Server  ServerConfig `json:"server"`
-	DB      DbConfig     `json:"db"`
-	Auth    AuthConfig   `json:"auth"`
-	Context string       `json:"context"`
+	Version       string       `json:"version"`
+	Server        ServerConfig `json:"server"`
+	DB            DbConfig     `json:"db"`
+	Auth          AuthConfig   `json:"auth"`
+	Context       string       `json:"context"`
+	TokenValidity int          `json:"tokenValidity"`
 }
 
 type ServerConfig struct {

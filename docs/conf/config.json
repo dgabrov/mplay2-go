@@ -15,5 +15,6 @@
     "url": "https://cbox.info/abax/loginNoToken",
     "right": "media"
   },
-  "context": "/mediaserv"
+  "context": "/mediaserv",
+  "tokenValidity": 1200
 }

@@ -2,12 +2,14 @@ package endpoint
 
 import (
 	"fmt"
+	"github.com/amanagement24/mplay2-go/internal/data"
+	"github.com/amanagement24/mplay2-go/internal/service"
 	"net/http"
 )
 
-func RegisterRoutes(mux *http.ServeMux, context string) {
+func RegisterRoutes(mux *http.ServeMux, context string, config *data.ConfigData, servr *service.Servr) {
 	mux.HandleFunc(fmt.Sprintf("GET %s/", context), wrapHandler(&RootEndpoint{}))
-	mux.HandleFunc(fmt.Sprintf("POST %s/login", context), wrapHandler(&PostLoginEndpoint{}))
+	mux.HandleFunc(fmt.Sprintf("POST %s/login", context), wrapHandler(NewPostLoginEndpoint(config, servr)))
 }
 
 func wrapHandler(h Handler) http.HandlerFunc {

@@ -6,3 +6,12 @@ Content-Type: application/json
   "login": "test1",
   "password": "test1"
 }
+
+### login locally
+POST http://localhost:8080/mediaserv/login
+Content-Type: application/json
+
+{
+  "login": "test1",
+  "password": "test1"
+}

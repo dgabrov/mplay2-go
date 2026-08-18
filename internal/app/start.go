@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/amanagement24/mplay2-go/internal/data"
 	"github.com/amanagement24/mplay2-go/internal/endpoint"
+	"github.com/amanagement24/mplay2-go/internal/service"
 	"log/slog"
 	"net/http"
 	"os"
@@ -52,8 +53,9 @@ func logConfigFields(cfg data.ConfigData) {
 }
 
 func startServer(cfg data.ConfigData, db *sql.DB) error {
+	servr := service.NewServr(db, &cfg)
 	mux := http.NewServeMux()
-	endpoint.RegisterRoutes(mux, cfg.Context)
+	endpoint.RegisterRoutes(mux, cfg.Context, &cfg, servr)
 
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Address, cfg.Server.Port)
 	slog.Info("Starting server", "address", addr)
