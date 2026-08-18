@@ -1,0 +1,4 @@
+- assume you have an environment variable CONFIG_FILE
+- it points now towards @docs/conf/config.json
+- first thing you do you load that in data.ConfigData
+- you log all the fields in it immediately after loading, one field per row
