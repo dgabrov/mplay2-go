@@ -2,7 +2,7 @@ package service
 
 import (
 	"database/sql"
-	"mplay2-go/internal/data"
+	"github.com/amanagement24/mplay2-go/internal/data"
 )
 
 type Servr struct {

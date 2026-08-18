@@ -1,0 +1,6 @@
+- added db section for db connectivity in @docs/conf/config.json
+- adjust ConfigData accordingly and don't forget about the loging all params except password
+- create separate DbConfig type similar with ServerConfig
+- create function that based on DbConfig instantiates db
+- test to see if you can open db, can run select 1 from something or anything then close the connecdtion
+- log that connection was successful, or return error back to main where the app will be closed

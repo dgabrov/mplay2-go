@@ -190,6 +190,9 @@ The schema uses string-based IDs (likely UUIDs). Consider using a library like `
 5. Expose via HTTP handlers
 6. Write tests at each layer
 
+### primary key
+All varchar primary keys are to be v7 uuid.
+
 ### Making Database Changes
 1. Update schema in `docs/db/db.sql`
 2. Plan migration strategy (consider migration tools like `flyway`, `migrate`, or `golang-migrate`)

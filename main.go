@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"mplay2-go/internal/app"
+	"github.com/amanagement24/mplay2-go/internal/app"
 	"os"
 )
 
