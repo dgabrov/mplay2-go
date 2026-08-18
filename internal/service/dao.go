@@ -133,3 +133,44 @@ func searchMedia(ctx context.Context, tx *sql.Tx, userID string, searchTerms []s
 
 	return results, nil
 }
+
+func searchPlaylist(ctx context.Context, tx *sql.Tx, userID string, searchTerms []string) ([]*data.PlayList, error) {
+	if len(searchTerms) == 0 {
+		return []*data.PlayList{}, nil
+	}
+
+	// Build WHERE clause with AND conditions for each search term
+	whereConditions := make([]string, len(searchTerms))
+	args := make([]interface{}, 0, len(searchTerms)+1)
+
+	args = append(args, userID)
+	for i := range searchTerms {
+		whereConditions[i] = "description LIKE ?"
+		args = append(args, searchTerms[i])
+	}
+
+	whereClause := "user_id = ? AND (" + strings.Join(whereConditions, " AND ") + ")"
+
+	query := "SELECT playlist_id, user_id, description FROM playlist WHERE " + whereClause
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search playlist: %w", err)
+	}
+	defer rows.Close()
+
+	var results []*data.PlayList
+	for rows.Next() {
+		var p data.PlayList
+		err := rows.Scan(&p.PlaylistId, &p.UserId, &p.Description)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan playlist: %w", err)
+		}
+		results = append(results, &p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating results: %w", err)
+	}
+
+	return results, nil
+}

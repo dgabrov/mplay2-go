@@ -131,3 +131,22 @@ func (s *Servr) SearchMedia(ctx context.Context, userID string, searchTerms []st
 
 	return results, nil
 }
+
+func (s *Servr) SearchPlaylist(ctx context.Context, userID string, searchTerms []string) ([]*data.PlayList, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	results, err := searchPlaylist(ctx, tx, userID, searchTerms)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}

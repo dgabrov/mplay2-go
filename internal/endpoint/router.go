@@ -11,6 +11,7 @@ func RegisterRoutes(mux *http.ServeMux, context string, config *data.ConfigData,
 	mux.HandleFunc(fmt.Sprintf("GET %s/", context), wrapHandler(&RootEndpoint{}))
 	mux.HandleFunc(fmt.Sprintf("POST %s/login", context), wrapHandler(NewPostLoginEndpoint(config, servr)))
 	mux.HandleFunc(fmt.Sprintf("GET %s/searchMedia", context), wrapHandler(NewGetSearchMediaEndpoint(servr)))
+	mux.HandleFunc(fmt.Sprintf("GET %s/searchPlaylist", context), wrapHandler(NewGetSearchPlaylistEndpoint(servr)))
 }
 
 func wrapHandler(h Handler) http.HandlerFunc {
