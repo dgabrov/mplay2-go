@@ -260,3 +260,22 @@ func (s *Servr) UpdatePlaylist(ctx context.Context, userID, playlistID, descript
 
 	return nil
 }
+
+func (s *Servr) GetMediaForPlaylist(ctx context.Context, userID, playlistID string) ([]*data.Media, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	media, err := getMediaForPlaylist(ctx, tx, userID, playlistID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return media, nil
+}

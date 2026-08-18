@@ -39,7 +39,7 @@ func (e *PostDeleteMediaEndpoint) Handle(w http.ResponseWriter, r *http.Request)
 }
 
 func (e *PostDeleteMediaEndpoint) process(ctx context.Context, r *http.Request) (DeleteMediaResponse, error) {
-	token, err := e.getToken(r)
+	token, err := getTokenFromRequest(r)
 	if err != nil {
 		return DeleteMediaResponse{}, err
 	}
@@ -71,14 +71,6 @@ func (e *PostDeleteMediaEndpoint) process(ctx context.Context, r *http.Request) 
 	e.deleteMediaFiles(req.Ids)
 
 	return DeleteMediaResponse{Deleted: count}, nil
-}
-
-func (e *PostDeleteMediaEndpoint) getToken(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("jtoken12")
-	if err != nil {
-		return "", err
-	}
-	return cookie.Value, nil
 }
 
 func (e *PostDeleteMediaEndpoint) deleteMediaFiles(ids []string) {

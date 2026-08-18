@@ -53,3 +53,11 @@ func createRandomToken() string {
 	_, _ = rand.Read(randomBytes)
 	return fmt.Sprintf("%s%s", u7.String(), hex.EncodeToString(randomBytes))[:64]
 }
+
+func getTokenFromRequest(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("jtoken12")
+	if err != nil {
+		return "", err
+	}
+	return cookie.Value, nil
+}

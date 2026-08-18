@@ -32,7 +32,7 @@ func (e *GetSearchMediaEndpoint) Handle(w http.ResponseWriter, r *http.Request) 
 }
 
 func (e *GetSearchMediaEndpoint) process(ctx context.Context, r *http.Request) (SearchMediaResponse, error) {
-	token, err := e.getToken(r)
+	token, err := getTokenFromRequest(r)
 	if err != nil {
 		return SearchMediaResponse{}, err
 	}
@@ -51,14 +51,6 @@ func (e *GetSearchMediaEndpoint) process(ctx context.Context, r *http.Request) (
 	}
 
 	return SearchMediaResponse{Results: media}, nil
-}
-
-func (e *GetSearchMediaEndpoint) getToken(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("jtoken12")
-	if err != nil {
-		return "", err
-	}
-	return cookie.Value, nil
 }
 
 func (e *GetSearchMediaEndpoint) transformSearchParam(param string) []string {

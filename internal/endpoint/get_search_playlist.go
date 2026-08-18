@@ -32,7 +32,7 @@ func (e *GetSearchPlaylistEndpoint) Handle(w http.ResponseWriter, r *http.Reques
 }
 
 func (e *GetSearchPlaylistEndpoint) process(ctx context.Context, r *http.Request) (SearchPlaylistResponse, error) {
-	token, err := e.getToken(r)
+	token, err := getTokenFromRequest(r)
 	if err != nil {
 		return SearchPlaylistResponse{}, err
 	}
@@ -51,14 +51,6 @@ func (e *GetSearchPlaylistEndpoint) process(ctx context.Context, r *http.Request
 	}
 
 	return SearchPlaylistResponse{Results: playlists}, nil
-}
-
-func (e *GetSearchPlaylistEndpoint) getToken(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("jtoken12")
-	if err != nil {
-		return "", err
-	}
-	return cookie.Value, nil
 }
 
 func (e *GetSearchPlaylistEndpoint) transformSearchParam(param string) []string {

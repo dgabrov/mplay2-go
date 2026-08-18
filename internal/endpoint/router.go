@@ -12,6 +12,7 @@ func RegisterRoutes(mux *http.ServeMux, context string, config *data.ConfigData,
 	mux.HandleFunc(fmt.Sprintf("POST %s/login", context), wrapHandler(NewPostLoginEndpoint(config, servr)))
 	mux.HandleFunc(fmt.Sprintf("GET %s/searchMedia", context), wrapHandler(NewGetSearchMediaEndpoint(servr)))
 	mux.HandleFunc(fmt.Sprintf("GET %s/searchPlaylist", context), wrapHandler(NewGetSearchPlaylistEndpoint(servr)))
+	mux.HandleFunc(fmt.Sprintf("GET %s/getMediaForPlaylist", context), wrapHandler(NewGetMediaForPlaylistEndpoint(servr)))
 	mux.HandleFunc(fmt.Sprintf("POST %s/deleteMedia", context), wrapHandler(NewPostDeleteMediaEndpoint(servr, config.UploadsFolder)))
 	mux.HandleFunc(fmt.Sprintf("POST %s/deletePlaylist", context), wrapHandler(NewPostDeletePlaylistEndpoint(servr)))
 	mux.HandleFunc(fmt.Sprintf("POST %s/addPlaylist", context), wrapHandler(NewPostAddPlaylistEndpoint(servr)))

@@ -36,7 +36,7 @@ func (e *PostDeletePlaylistEndpoint) Handle(w http.ResponseWriter, r *http.Reque
 }
 
 func (e *PostDeletePlaylistEndpoint) process(ctx context.Context, r *http.Request) (DeletePlaylistResponse, error) {
-	token, err := e.getToken(r)
+	token, err := getTokenFromRequest(r)
 	if err != nil {
 		return DeletePlaylistResponse{}, err
 	}
@@ -66,12 +66,4 @@ func (e *PostDeletePlaylistEndpoint) process(ctx context.Context, r *http.Reques
 	}
 
 	return DeletePlaylistResponse{Deleted: count}, nil
-}
-
-func (e *PostDeletePlaylistEndpoint) getToken(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("jtoken12")
-	if err != nil {
-		return "", err
-	}
-	return cookie.Value, nil
 }

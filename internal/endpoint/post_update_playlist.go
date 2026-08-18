@@ -29,7 +29,7 @@ func (e *PostUpdatePlaylistEndpoint) Handle(w http.ResponseWriter, r *http.Reque
 }
 
 func (e *PostUpdatePlaylistEndpoint) process(ctx context.Context, r *http.Request) (SuccessResponse, error) {
-	token, err := e.getToken(r)
+	token, err := getTokenFromRequest(r)
 	if err != nil {
 		return SuccessResponse{}, err
 	}
@@ -55,12 +55,4 @@ func (e *PostUpdatePlaylistEndpoint) process(ctx context.Context, r *http.Reques
 	}
 
 	return SuccessResponse{Success: true}, nil
-}
-
-func (e *PostUpdatePlaylistEndpoint) getToken(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("jtoken12")
-	if err != nil {
-		return "", err
-	}
-	return cookie.Value, nil
 }

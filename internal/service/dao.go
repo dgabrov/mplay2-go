@@ -308,3 +308,33 @@ func updatePlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID, descrip
 
 	return nil
 }
+
+func getMediaForPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID string) ([]*data.Media, error) {
+	query := `SELECT m.media_id, m.user_id, m.description, m.content_type, m.size, m.width, m.height
+	FROM media m
+	INNER JOIN media_playlist mp ON m.media_id = mp.media_id
+	WHERE mp.playlist_id = ? AND m.user_id = ?
+	ORDER BY mp.seq_no`
+
+	rows, err := tx.QueryContext(ctx, query, playlistID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get media for playlist: %w", err)
+	}
+	defer rows.Close()
+
+	var results []*data.Media
+	for rows.Next() {
+		var m data.Media
+		err := rows.Scan(&m.Id, &m.UserId, &m.Description, &m.ContentType, &m.Size, &m.Width, &m.Height)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan media: %w", err)
+		}
+		results = append(results, &m)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating results: %w", err)
+	}
+
+	return results, nil
+}
