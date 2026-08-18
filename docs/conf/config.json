@@ -16,5 +16,6 @@
     "right": "media"
   },
   "context": "/mediaserv",
-  "tokenValidity": 1200
+  "tokenValidity": 1200,
+  "uploadsFolder": "/home/daniel/IdeaProjects/mplay2-go/docs/files"
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/amanagement24/mplay2-go/internal/data"
 	"github.com/google/uuid"
+	"strings"
 	"time"
 )
 
@@ -90,4 +91,45 @@ func getNextSequenceValue(ctx context.Context, tx *sql.Tx) (int64, error) {
 	}
 
 	return newSeqval, nil
+}
+
+func searchMedia(ctx context.Context, tx *sql.Tx, userID string, searchTerms []string) ([]*data.Media, error) {
+	if len(searchTerms) == 0 {
+		return []*data.Media{}, nil
+	}
+
+	// Build WHERE clause with AND conditions for each search term
+	whereConditions := make([]string, len(searchTerms))
+	args := make([]interface{}, 0, len(searchTerms)+1)
+
+	args = append(args, userID)
+	for i := range searchTerms {
+		whereConditions[i] = "description LIKE ?"
+		args = append(args, searchTerms[i])
+	}
+
+	whereClause := "user_id = ? AND (" + strings.Join(whereConditions, " AND ") + ")"
+
+	query := "SELECT media_id, user_id, description, content_type, size, width, height FROM media WHERE " + whereClause
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search media: %w", err)
+	}
+	defer rows.Close()
+
+	var results []*data.Media
+	for rows.Next() {
+		var m data.Media
+		err := rows.Scan(&m.Id, &m.UserId, &m.Description, &m.ContentType, &m.Size, &m.Width, &m.Height)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan media: %w", err)
+		}
+		results = append(results, &m)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating results: %w", err)
+	}
+
+	return results, nil
 }

@@ -1,0 +1,1 @@
+- create entry called uploadsFolder in config.json and propagate

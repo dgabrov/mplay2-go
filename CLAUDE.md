@@ -225,4 +225,4 @@ As the project develops, evaluate these common Go libraries:
 - The top level function you add opens a db transaction and then takes care of having it committed / rolled back
 - The top level function you add has first parameter a context that is created on topmost level
 - Any direct database access - one "hit", one sql, you do in separate private function created preferrably in file @internal/service/dao.go that takes transaction as one of the parameters
- 
+- before you want to create a new value object, look in package data under @internal/data maybe the type is already there. If not there, create it there in business.go

@@ -112,3 +112,22 @@ func (s *Servr) GetNextSequenceValue(ctx context.Context) (int64, error) {
 
 	return seqval, nil
 }
+
+func (s *Servr) SearchMedia(ctx context.Context, userID string, searchTerms []string) ([]*data.Media, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	results, err := searchMedia(ctx, tx, userID, searchTerms)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}

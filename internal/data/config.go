@@ -7,6 +7,7 @@ type ConfigData struct {
 	Auth          AuthConfig   `json:"auth"`
 	Context       string       `json:"context"`
 	TokenValidity int          `json:"tokenValidity"`
+	UploadsFolder string       `json:"uploadsFolder"`
 }
 
 type ServerConfig struct {
