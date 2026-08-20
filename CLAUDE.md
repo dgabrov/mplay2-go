@@ -190,6 +190,9 @@ The schema uses string-based IDs (likely UUIDs). Consider using a library like `
 5. Expose via HTTP handlers
 6. Write tests at each layer
 
+### primary key
+All varchar primary keys are to be v7 uuid.
+
 ### Making Database Changes
 1. Update schema in `docs/db/db.sql`
 2. Plan migration strategy (consider migration tools like `flyway`, `migrate`, or `golang-migrate`)
@@ -222,4 +225,4 @@ As the project develops, evaluate these common Go libraries:
 - The top level function you add opens a db transaction and then takes care of having it committed / rolled back
 - The top level function you add has first parameter a context that is created on topmost level
 - Any direct database access - one "hit", one sql, you do in separate private function created preferrably in file @internal/service/dao.go that takes transaction as one of the parameters
- 
+- before you want to create a new value object, look in package data under @internal/data maybe the type is already there. If not there, create it there in business.go

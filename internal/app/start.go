@@ -1,10 +1,14 @@
 package app
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/amanagement24/mplay2-go/internal/data"
+	"github.com/amanagement24/mplay2-go/internal/endpoint"
+	"github.com/amanagement24/mplay2-go/internal/service"
 	"log/slog"
-	"mplay2-go/internal/data"
+	"net/http"
 	"os"
 )
 
@@ -26,9 +30,36 @@ func Start() error {
 
 	logConfigFields(cfg)
 
-	return nil
+	db, err := initDB(cfg.DB)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	return startServer(cfg, db)
 }
 
 func logConfigFields(cfg data.ConfigData) {
 	slog.Info("Version", "value", cfg.Version)
+	slog.Info("Server Address", "value", cfg.Server.Address)
+	slog.Info("Server Port", "value", cfg.Server.Port)
+	slog.Info("DB Machine", "value", cfg.DB.Machine)
+	slog.Info("DB Port", "value", cfg.DB.Port)
+	slog.Info("DB Database", "value", cfg.DB.Database)
+	slog.Info("DB User", "value", cfg.DB.User)
+	slog.Info("Auth URL", "value", cfg.Auth.URL)
+	slog.Info("Auth Right", "value", cfg.Auth.Right)
+	slog.Info("Context", "value", cfg.Context)
+	slog.Info("Media Slice", "value", cfg.MediaSlice)
+}
+
+func startServer(cfg data.ConfigData, db *sql.DB) error {
+	servr := service.NewServr(db, &cfg)
+	mux := http.NewServeMux()
+	endpoint.RegisterRoutes(mux, cfg.Context, &cfg, servr)
+
+	addr := fmt.Sprintf("%s:%d", cfg.Server.Address, cfg.Server.Port)
+	slog.Info("Starting server", "address", addr)
+
+	return http.ListenAndServe(addr, mux)
 }

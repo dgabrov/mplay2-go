@@ -1,3 +1,22 @@
 {
-  "version": "1.0 - updated"
+  "version": "1.0 - updated",
+  "server": {
+    "address": "localhost",
+    "port": 3001
+  },
+  "db": {
+    "machine": "localhost",
+    "port": 3306,
+    "database": "mplay2",
+    "user": "mplay2",
+    "password": "mplay2"
+  },
+  "auth": {
+    "url": "https://cbox.info/abax/loginNoToken",
+    "right": "media"
+  },
+  "context": "/mediaserv",
+  "tokenValidity": 1200,
+  "uploadsFolder": "/home/daniel/IdeaProjects/mplay2-go/docs/files",
+  "mediaSlice": 150000
 }
