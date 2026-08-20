@@ -1,0 +1,48 @@
+### Step 1: Login to get session token
+POST http://localhost:8080/mediaserv/login
+Content-Type: application/json
+
+{
+  "login": "test1",
+  "password": "test1"
+}
+
+###
+
+### Step 2: Play media from beginning
+# Plays the entire media file in chunks (default: 150000 bytes per chunk)
+# Replace YOUR_TOKEN_HERE with actual token from login
+GET http://localhost:8080/mediaserv/playMedia?id=video-001
+Cookie: token=YOUR_TOKEN_HERE
+
+###
+
+### Step 3: Play media from specific position (0-99999 bytes)
+# Request first 100KB of media
+GET http://localhost:8080/mediaserv/playMedia?id=video-001
+Cookie: token=YOUR_TOKEN_HERE
+Range: bytes=0-99999
+
+###
+
+### Step 4: Play media from specific position (resume download)
+# Resume from byte 500000
+GET http://localhost:8080/mediaserv/playMedia?id=video-001
+Cookie: token=YOUR_TOKEN_HERE
+Range: bytes=500000-
+
+###
+
+### Step 5: Play media last 100KB
+# Request last 100KB of media file
+GET http://localhost:8080/mediaserv/playMedia?id=video-001
+Cookie: token=YOUR_TOKEN_HERE
+Range: bytes=-100000
+
+###
+
+### Step 6: Play media specific range
+# Request bytes 1000000 to 1500000
+GET http://localhost:8080/mediaserv/playMedia?id=video-001
+Cookie: token=YOUR_TOKEN_HERE
+Range: bytes=1000000-1500000

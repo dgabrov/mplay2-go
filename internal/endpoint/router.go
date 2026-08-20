@@ -9,6 +9,7 @@ import (
 
 func RegisterRoutes(mux *http.ServeMux, context string, config *data.ConfigData, servr *service.Servr) {
 	mux.HandleFunc(fmt.Sprintf("GET %s/", context), wrapHandler(&RootEndpoint{}))
+	mux.HandleFunc(fmt.Sprintf("GET %s/playMedia", context), wrapHandler(NewGetPlayMediaEndpoint(servr, config.UploadsFolder, config.MediaSlice)))
 	mux.HandleFunc(fmt.Sprintf("POST %s/login", context), wrapHandler(NewPostLoginEndpoint(config, servr)))
 	mux.HandleFunc(fmt.Sprintf("GET %s/searchMedia", context), wrapHandler(NewGetSearchMediaEndpoint(servr)))
 	mux.HandleFunc(fmt.Sprintf("GET %s/searchPlaylist", context), wrapHandler(NewGetSearchPlaylistEndpoint(servr)))
