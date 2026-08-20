@@ -117,7 +117,7 @@ func (e *PostUpdateMediaEndpoint) handleAddMedia(ctx context.Context, userID str
 		return data.SuccessResponse{}, fmt.Errorf("failed to update media size: %w", err)
 	}
 
-	if contentType == ContentTypeVideo {
+	if detector.IsVideo(contentType) {
 		prober := NewVideoProber()
 		videoFile, err := os.Open(filepath.Join(e.uploadsFolder, media.Id+".dat"))
 		if err == nil {
@@ -174,7 +174,7 @@ func (e *PostUpdateMediaEndpoint) handleUpdateMedia(ctx context.Context, userID 
 		return data.SuccessResponse{}, fmt.Errorf("failed to update media size: %w", err)
 	}
 
-	if contentType == ContentTypeVideo {
+	if detector.IsVideo(contentType) {
 		prober := NewVideoProber()
 		videoFile, err := os.Open(filepath.Join(e.uploadsFolder, req.Id+".dat"))
 		if err == nil {
