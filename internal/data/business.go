@@ -1,13 +1,13 @@
 package data
 
 type Media struct {
-	Id          string
-	UserId      string
-	Description string
-	ContentType string
-	Size        int64
-	Width       int
-	Height      int
+	Id          string `json:"id"`
+	UserId      string `json:"userId"`
+	Description string `json:"description"`
+	ContentType string `json:"contentType"`
+	Size        int64  `json:"size"`
+	Width       int    `json:"width"`
+	Height      int    `json:"height"`
 }
 
 type PlayList struct {

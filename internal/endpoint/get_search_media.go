@@ -9,10 +9,6 @@ import (
 	"github.com/amanagement24/mplay2-go/internal/service"
 )
 
-type SearchMediaResponse struct {
-	Results []*data.Media `json:"results"`
-}
-
 type GetSearchMediaEndpoint struct {
 	servr *service.Servr
 }
@@ -31,15 +27,15 @@ func (e *GetSearchMediaEndpoint) Handle(w http.ResponseWriter, r *http.Request) 
 	return nil
 }
 
-func (e *GetSearchMediaEndpoint) process(ctx context.Context, r *http.Request) (SearchMediaResponse, error) {
+func (e *GetSearchMediaEndpoint) process(ctx context.Context, r *http.Request) ([]*data.Media, error) {
 	token, err := getTokenFromRequest(r)
 	if err != nil {
-		return SearchMediaResponse{}, err
+		return nil, err
 	}
 
 	userID, err := e.servr.ValidateToken(ctx, token)
 	if err != nil {
-		return SearchMediaResponse{}, err
+		return nil, err
 	}
 
 	searchParam := r.URL.Query().Get("searchMedia")
@@ -47,10 +43,10 @@ func (e *GetSearchMediaEndpoint) process(ctx context.Context, r *http.Request) (
 
 	media, err := e.servr.SearchMedia(ctx, userID, searchTerms)
 	if err != nil {
-		return SearchMediaResponse{}, err
+		return nil, err
 	}
 
-	return SearchMediaResponse{Results: media}, nil
+	return media, nil
 }
 
 func (e *GetSearchMediaEndpoint) transformSearchParam(param string) []string {
@@ -70,6 +66,10 @@ func (e *GetSearchMediaEndpoint) transformSearchParam(param string) []string {
 			word = word + "%"
 		}
 		words[i] = word
+	}
+
+	if len(words) == 0 {
+		words = append(words, "%")
 	}
 
 	return words

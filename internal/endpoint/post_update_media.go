@@ -3,7 +3,6 @@ package endpoint
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -58,15 +57,12 @@ func (e *PostUpdateMediaEndpoint) process(ctx context.Context, r *http.Request) 
 	}
 	defer r.MultipartForm.RemoveAll()
 
-	jsonPart := r.FormValue("data")
-	if jsonPart == "" {
-		return data.SuccessResponse{}, fmt.Errorf("missing 'data' form field")
-	}
+	id := r.FormValue("id")
+	strAdd := r.FormValue("adding")
+	adding := strAdd == "true"
+	description := r.FormValue("description")
 
-	var req UpdateMediaRequest
-	if err := json.Unmarshal([]byte(jsonPart), &req); err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("invalid data format: %w", err)
-	}
+	req := UpdateMediaRequest{Adding: adding, Id: id, Description: description}
 
 	file, fileHeader, fileErr := r.FormFile("file")
 	hasFile := fileErr == nil

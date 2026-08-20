@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/amanagement24/mplay2-go/internal/data"
-	"github.com/google/uuid"
 	"strings"
 	"time"
+
+	"github.com/amanagement24/mplay2-go/internal/data"
+	"github.com/google/uuid"
 )
 
 func getUserByProvidedId(ctx context.Context, tx *sql.Tx, providedUserID string) (*data.User, error) {
@@ -101,13 +102,9 @@ func getNextSequenceValue(ctx context.Context, tx *sql.Tx) (int64, error) {
 }
 
 func searchMedia(ctx context.Context, tx *sql.Tx, userID string, searchTerms []string) ([]*data.Media, error) {
-	if len(searchTerms) == 0 {
-		return []*data.Media{}, nil
-	}
-
 	// Build WHERE clause with AND conditions for each search term
 	whereConditions := make([]string, len(searchTerms))
-	args := make([]interface{}, 0, len(searchTerms)+1)
+	args := make([]any, 0, len(searchTerms)+1)
 
 	args = append(args, userID)
 	for i := range searchTerms {

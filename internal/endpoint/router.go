@@ -2,9 +2,11 @@ package endpoint
 
 import (
 	"fmt"
+	"log/slog"
+	"net/http"
+
 	"github.com/amanagement24/mplay2-go/internal/data"
 	"github.com/amanagement24/mplay2-go/internal/service"
-	"net/http"
 )
 
 func RegisterRoutes(mux *http.ServeMux, context string, config *data.ConfigData, servr *service.Servr) {
@@ -25,6 +27,7 @@ func RegisterRoutes(mux *http.ServeMux, context string, config *data.ConfigData,
 
 func wrapHandler(h Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("Request", "method", r.Method, "path", r.RequestURI)
 		h.Handle(w, r)
 	}
 }
