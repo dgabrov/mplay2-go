@@ -28,31 +28,31 @@ func (e *PostUpdatePlaylistEndpoint) Handle(w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
-func (e *PostUpdatePlaylistEndpoint) process(ctx context.Context, r *http.Request) (SuccessResponse, error) {
+func (e *PostUpdatePlaylistEndpoint) process(ctx context.Context, r *http.Request) (data.SuccessResponse, error) {
 	token, err := getTokenFromRequest(r)
 	if err != nil {
-		return SuccessResponse{}, err
+		return data.SuccessResponse{}, err
 	}
 
 	userID, err := e.servr.ValidateToken(ctx, token)
 	if err != nil {
-		return SuccessResponse{}, err
+		return data.SuccessResponse{}, err
 	}
 
 	var update data.DescriptionUpdate
 	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
-		return SuccessResponse{}, fmt.Errorf("invalid request body: %w", err)
+		return data.SuccessResponse{}, fmt.Errorf("invalid request body: %w", err)
 	}
 
 	err = e.servr.VerifyPlaylistOwnership(ctx, userID, []string{update.Id})
 	if err != nil {
-		return SuccessResponse{}, err
+		return data.SuccessResponse{}, err
 	}
 
 	err = e.servr.UpdatePlaylist(ctx, userID, update.Id, update.Description)
 	if err != nil {
-		return SuccessResponse{}, err
+		return data.SuccessResponse{}, err
 	}
 
-	return SuccessResponse{Success: true}, nil
+	return data.SuccessResponse{Success: true}, nil
 }

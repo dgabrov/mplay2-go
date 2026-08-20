@@ -35,7 +35,7 @@ func (e *PostLoginEndpoint) Handle(w http.ResponseWriter, r *http.Request) error
 
 	if err == nil {
 		cookie := &http.Cookie{
-			Name:     "jtoken12",
+			Name:     data.TokenCookieName,
 			Value:    payload.Token,
 			HttpOnly: true,
 			Path:     "/",

@@ -338,3 +338,131 @@ func getMediaForPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID str
 
 	return results, nil
 }
+
+func removeMediaFromPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID string, mediaIds []string) (int, error) {
+	if len(mediaIds) == 0 {
+		return 0, nil
+	}
+
+	// Verify playlist belongs to user first
+	var count int
+	query := "SELECT COUNT(*) FROM playlist WHERE playlist_id = ? AND user_id = ?"
+	err := tx.QueryRowContext(ctx, query, playlistID, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to verify playlist ownership: %w", err)
+	}
+
+	if count == 0 {
+		return 0, fmt.Errorf("playlist does not belong to this user or does not exist")
+	}
+
+	placeholders := make([]string, len(mediaIds))
+	args := make([]interface{}, len(mediaIds)+1)
+	args[0] = playlistID
+
+	for i, id := range mediaIds {
+		placeholders[i] = "?"
+		args[i+1] = id
+	}
+
+	deleteQuery := "DELETE FROM media_playlist WHERE playlist_id = ? AND media_id IN (" + strings.Join(placeholders, ",") + ")"
+	result, err := tx.ExecContext(ctx, deleteQuery, args...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to remove media from playlist: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	return int(rowsAffected), nil
+}
+
+func addMediaToPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID string, mediaIds []string) (int, error) {
+	if len(mediaIds) == 0 {
+		return 0, nil
+	}
+
+	// Verify playlist belongs to user
+	var count int
+	query := "SELECT COUNT(*) FROM playlist WHERE playlist_id = ? AND user_id = ?"
+	err := tx.QueryRowContext(ctx, query, playlistID, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to verify playlist ownership: %w", err)
+	}
+
+	if count == 0 {
+		return 0, fmt.Errorf("playlist does not belong to this user or does not exist")
+	}
+
+	// Verify all media ids belong to user
+	placeholders := make([]string, len(mediaIds))
+	args := make([]interface{}, len(mediaIds)+1)
+	args[0] = userID
+
+	for i, id := range mediaIds {
+		placeholders[i] = "?"
+		args[i+1] = id
+	}
+
+	mediaQuery := "SELECT COUNT(*) FROM media WHERE user_id = ? AND media_id IN (" + strings.Join(placeholders, ",") + ")"
+	var mediaCount int
+	err = tx.QueryRowContext(ctx, mediaQuery, args...).Scan(&mediaCount)
+	if err != nil {
+		return 0, fmt.Errorf("failed to verify media ownership: %w", err)
+	}
+
+	if mediaCount != len(mediaIds) {
+		return 0, fmt.Errorf("some media ids do not belong to this user or do not exist")
+	}
+
+	// Get existing media_ids already in this playlist
+	existingQuery := "SELECT media_id FROM media_playlist WHERE playlist_id = ? AND media_id IN (" + strings.Join(placeholders, ",") + ")"
+	existingArgs := make([]interface{}, len(mediaIds)+1)
+	existingArgs[0] = playlistID
+	copy(existingArgs[1:], args[1:])
+
+	rows, err := tx.QueryContext(ctx, existingQuery, existingArgs...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to check existing media: %w", err)
+	}
+	defer rows.Close()
+
+	existingIds := make(map[string]bool)
+	for rows.Next() {
+		var existingId string
+		if err := rows.Scan(&existingId); err != nil {
+			return 0, fmt.Errorf("failed to scan existing id: %w", err)
+		}
+		existingIds[existingId] = true
+	}
+
+	if err := rows.Err(); err != nil {
+		return 0, fmt.Errorf("error iterating existing results: %w", err)
+	}
+
+	// Insert only new media to playlist
+	addedCount := 0
+	for _, mediaId := range mediaIds {
+		if existingIds[mediaId] {
+			continue // Skip already added media
+		}
+
+		seqNo, err := getNextSequenceValue(ctx, tx)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get sequence value: %w", err)
+		}
+
+		mediaPlaylistId := uuid.Must(uuid.NewV7()).String()
+		insertQuery := "INSERT INTO media_playlist (media_playlist_id, playlist_id, media_id, seq_no) VALUES (?, ?, ?, ?)"
+		_, err = tx.ExecContext(ctx, insertQuery, mediaPlaylistId, playlistID, mediaId, seqNo)
+		if err != nil {
+			return 0, fmt.Errorf("failed to add media to playlist: %w", err)
+		}
+
+		addedCount++
+	}
+
+	return addedCount, nil
+}

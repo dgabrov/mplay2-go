@@ -279,3 +279,41 @@ func (s *Servr) GetMediaForPlaylist(ctx context.Context, userID, playlistID stri
 
 	return media, nil
 }
+
+func (s *Servr) RemoveMediaFromPlaylist(ctx context.Context, userID, playlistID string, mediaIds []string) (int, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	count, err := removeMediaFromPlaylist(ctx, tx, userID, playlistID, mediaIds)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Servr) AddMediaToPlaylist(ctx context.Context, userID, playlistID string, mediaIds []string) (int, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	count, err := addMediaToPlaylist(ctx, tx, userID, playlistID, mediaIds)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

@@ -10,10 +10,6 @@ import (
 	"github.com/amanagement24/mplay2-go/internal/service"
 )
 
-type SuccessResponse struct {
-	Success bool `json:"success"`
-}
-
 type PostAddPlaylistEndpoint struct {
 	servr *service.Servr
 }
@@ -32,20 +28,20 @@ func (e *PostAddPlaylistEndpoint) Handle(w http.ResponseWriter, r *http.Request)
 	return nil
 }
 
-func (e *PostAddPlaylistEndpoint) process(ctx context.Context, r *http.Request) (SuccessResponse, error) {
+func (e *PostAddPlaylistEndpoint) process(ctx context.Context, r *http.Request) (data.SuccessResponse, error) {
 	token, err := getTokenFromRequest(r)
 	if err != nil {
-		return SuccessResponse{}, err
+		return data.SuccessResponse{}, err
 	}
 
 	userID, err := e.servr.ValidateToken(ctx, token)
 	if err != nil {
-		return SuccessResponse{}, err
+		return data.SuccessResponse{}, err
 	}
 
 	var update data.DescriptionUpdate
 	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
-		return SuccessResponse{}, fmt.Errorf("invalid request body: %w", err)
+		return data.SuccessResponse{}, fmt.Errorf("invalid request body: %w", err)
 	}
 
 	playlist := &data.PlayList{
@@ -55,8 +51,8 @@ func (e *PostAddPlaylistEndpoint) process(ctx context.Context, r *http.Request) 
 
 	err = e.servr.AddPlaylist(ctx, playlist)
 	if err != nil {
-		return SuccessResponse{}, err
+		return data.SuccessResponse{}, err
 	}
 
-	return SuccessResponse{Success: true}, nil
+	return data.SuccessResponse{Success: true}, nil
 }

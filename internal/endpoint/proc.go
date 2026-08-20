@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/amanagement24/mplay2-go/internal/data"
 	"github.com/google/uuid"
 )
 
@@ -55,7 +56,7 @@ func createRandomToken() string {
 }
 
 func getTokenFromRequest(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("jtoken12")
+	cookie, err := r.Cookie(data.TokenCookieName)
 	if err != nil {
 		return "", err
 	}
