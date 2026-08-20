@@ -50,6 +50,7 @@ func logConfigFields(cfg data.ConfigData) {
 	slog.Info("Auth URL", "value", cfg.Auth.URL)
 	slog.Info("Auth Right", "value", cfg.Auth.Right)
 	slog.Info("Context", "value", cfg.Context)
+	slog.Info("Media Slice", "value", cfg.MediaSlice)
 }
 
 func startServer(cfg data.ConfigData, db *sql.DB) error {

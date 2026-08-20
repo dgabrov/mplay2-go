@@ -8,6 +8,7 @@ type ConfigData struct {
 	Context       string       `json:"context"`
 	TokenValidity int          `json:"tokenValidity"`
 	UploadsFolder string       `json:"uploadsFolder"`
+	MediaSlice    int          `json:"mediaSlice"`
 }
 
 type ServerConfig struct {
