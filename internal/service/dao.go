@@ -466,3 +466,70 @@ func addMediaToPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID stri
 
 	return addedCount, nil
 }
+
+func addMedia(ctx context.Context, tx *sql.Tx, media *data.Media) error {
+	if media.Id == "" {
+		media.Id = uuid.Must(uuid.NewV7()).String()
+	}
+
+	query := "INSERT INTO media (media_id, user_id, description, content_type, size, width, height) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	_, err := tx.ExecContext(ctx, query, media.Id, media.UserId, media.Description, media.ContentType, media.Size, media.Width, media.Height)
+	if err != nil {
+		return fmt.Errorf("failed to add media: %w", err)
+	}
+
+	return nil
+}
+
+func getMedia(ctx context.Context, tx *sql.Tx, userID, mediaID string) (*data.Media, error) {
+	var media data.Media
+	query := "SELECT media_id, user_id, description, content_type, size, width, height FROM media WHERE media_id = ? AND user_id = ?"
+	err := tx.QueryRowContext(ctx, query, mediaID, userID).Scan(&media.Id, &media.UserId, &media.Description, &media.ContentType, &media.Size, &media.Width, &media.Height)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get media: %w", err)
+	}
+	return &media, nil
+}
+
+func updateMedia(ctx context.Context, tx *sql.Tx, userID, mediaID, description string) error {
+	query := "UPDATE media SET description = ? WHERE media_id = ? AND user_id = ?"
+	_, err := tx.ExecContext(ctx, query, description, mediaID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update media: %w", err)
+	}
+
+	return nil
+}
+
+func updateMediaWithType(ctx context.Context, tx *sql.Tx, userID, mediaID, description, contentType string) error {
+	query := "UPDATE media SET description = ?, content_type = ? WHERE media_id = ? AND user_id = ?"
+	_, err := tx.ExecContext(ctx, query, description, contentType, mediaID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update media: %w", err)
+	}
+
+	return nil
+}
+
+func updateMediaSize(ctx context.Context, tx *sql.Tx, userID, mediaID string, size int64) error {
+	query := "UPDATE media SET size = ? WHERE media_id = ? AND user_id = ?"
+	_, err := tx.ExecContext(ctx, query, size, mediaID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update media size: %w", err)
+	}
+
+	return nil
+}
+
+func updateMediaDimensions(ctx context.Context, tx *sql.Tx, userID, mediaID string, width, height int) error {
+	query := "UPDATE media SET width = ?, height = ? WHERE media_id = ? AND user_id = ?"
+	_, err := tx.ExecContext(ctx, query, width, height, mediaID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update media dimensions: %w", err)
+	}
+
+	return nil
+}

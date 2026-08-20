@@ -1,0 +1,26 @@
+### Add new media (multipart request)
+# This demonstrates adding a new media file
+# Note: .http files have limited support for multipart; use curl command below instead
+# POST http://localhost:8080/mediaserv/updateMedia
+# Content-Type: multipart/form-data; boundary=----FormBoundary7MA4YWxkTrZu0gW
+#
+# ------FormBoundary7MA4YWxkTrZu0gW
+# Content-Disposition: form-data; name="data"
+#
+# {"adding": true, "id": "test-media-1", "description": "Test video"}
+# ------FormBoundary7MA4YWxkTrZu0gW
+# Content-Disposition: form-data; name="file"; filename="sample.mp4"
+# Content-Type: video/mp4
+#
+# < ./sample.mp4
+# ------FormBoundary7MA4YWxkTrZu0gW--
+
+### Update media description only (no file)
+# POST http://localhost:8080/mediaserv/updateMedia
+# Content-Type: multipart/form-data; boundary=----FormBoundary7MA4YWxkTrZu0gW
+#
+# ------FormBoundary7MA4YWxkTrZu0gW
+# Content-Disposition: form-data; name="data"
+#
+# {"adding": false, "id": "test-media-1", "description": "Updated description"}
+# ------FormBoundary7MA4YWxkTrZu0gW--

@@ -317,3 +317,112 @@ func (s *Servr) AddMediaToPlaylist(ctx context.Context, userID, playlistID strin
 
 	return count, nil
 }
+
+func (s *Servr) AddMedia(ctx context.Context, media *data.Media) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := addMedia(ctx, tx, media); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Servr) GetMedia(ctx context.Context, userID, mediaID string) (*data.Media, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	media, err := getMedia(ctx, tx, userID, mediaID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return media, nil
+}
+
+func (s *Servr) UpdateMedia(ctx context.Context, userID, mediaID, description string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := updateMedia(ctx, tx, userID, mediaID, description); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Servr) UpdateMediaWithType(ctx context.Context, userID, mediaID, description, contentType string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := updateMediaWithType(ctx, tx, userID, mediaID, description, contentType); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Servr) UpdateMediaSize(ctx context.Context, userID, mediaID string, size int64) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := updateMediaSize(ctx, tx, userID, mediaID, size); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Servr) UpdateMediaDimensions(ctx context.Context, userID, mediaID string, width, height int) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := updateMediaDimensions(ctx, tx, userID, mediaID, width, height); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
