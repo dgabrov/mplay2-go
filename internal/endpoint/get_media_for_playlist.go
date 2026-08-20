@@ -9,10 +9,6 @@ import (
 	"github.com/amanagement24/mplay2-go/internal/service"
 )
 
-type MediaForPlaylistResponse struct {
-	Results []*data.Media `json:"results"`
-}
-
 type GetMediaForPlaylistEndpoint struct {
 	servr *service.Servr
 }
@@ -31,30 +27,34 @@ func (e *GetMediaForPlaylistEndpoint) Handle(w http.ResponseWriter, r *http.Requ
 	return nil
 }
 
-func (e *GetMediaForPlaylistEndpoint) process(ctx context.Context, r *http.Request) (MediaForPlaylistResponse, error) {
+func (e *GetMediaForPlaylistEndpoint) process(ctx context.Context, r *http.Request) ([]*data.Media, error) {
 	token, err := getTokenFromRequest(r)
 	if err != nil {
-		return MediaForPlaylistResponse{}, err
+		return nil, err
 	}
 
 	userID, err := e.servr.ValidateToken(ctx, token)
 	if err != nil {
-		return MediaForPlaylistResponse{}, err
+		return nil, err
 	}
 
 	playlistID := r.URL.Query().Get("playlistId")
 	if playlistID == "" {
-		return MediaForPlaylistResponse{}, fmt.Errorf("playlistId query parameter is required")
+		return nil, fmt.Errorf("playlistId query parameter is required")
 	}
 
 	if err := e.servr.VerifyPlaylistOwnership(ctx, userID, []string{playlistID}); err != nil {
-		return MediaForPlaylistResponse{}, err
+		return nil, err
 	}
 
 	media, err := e.servr.GetMediaForPlaylist(ctx, userID, playlistID)
 	if err != nil {
-		return MediaForPlaylistResponse{}, err
+		return nil, err
 	}
 
-	return MediaForPlaylistResponse{Results: media}, nil
+	if media == nil {
+		media = make([]*data.Media, 0)
+	}
+
+	return media, nil
 }

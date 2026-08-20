@@ -5,6 +5,12 @@ type LoginData struct {
 	Password string `json:"password"`
 }
 
+type LoginApiResponse struct {
+	Id    string `json:"id"`
+	Login string `json:"login"`
+	Name  string `json:"name"`
+}
+
 type LoginResponse struct {
 	Id     string   `json:"id"`
 	Login  string   `json:"login"`

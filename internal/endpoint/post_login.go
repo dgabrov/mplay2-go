@@ -13,10 +13,6 @@ import (
 	"github.com/amanagement24/mplay2-go/internal/service"
 )
 
-type LoginTokenResponse struct {
-	Token string `json:"token"`
-}
-
 type PostLoginEndpoint struct {
 	config *data.ConfigData
 	servr  *service.Servr
@@ -31,51 +27,64 @@ func NewPostLoginEndpoint(config *data.ConfigData, servr *service.Servr) *PostLo
 
 func (e *PostLoginEndpoint) Handle(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
-	payload, err := e.process(ctx, r)
+	result, err := e.process(ctx, r)
 
-	if err == nil {
+	if err == nil && result != nil {
 		cookie := &http.Cookie{
 			Name:     data.TokenCookieName,
-			Value:    payload.Token,
+			Value:    result.token,
 			HttpOnly: true,
 			Path:     "/",
 		}
 		http.SetCookie(w, cookie)
+		writeJsonResponse(w, result.response, err)
+	} else {
+		writeJsonResponse(w, nil, err)
 	}
-
-	writeJsonResponse(w, payload, err)
 
 	return nil
 }
 
-func (e *PostLoginEndpoint) process(ctx context.Context, r *http.Request) (LoginTokenResponse, error) {
+type loginResult struct {
+	response *data.LoginApiResponse
+	token    string
+}
+
+func (e *PostLoginEndpoint) process(ctx context.Context, r *http.Request) (*loginResult, error) {
 	loginData, err := e.getLoginData(r)
 	if err != nil {
-		return LoginTokenResponse{}, err
+		return nil, err
 	}
 
 	authResponse, err := e.authenticateWithProvider(ctx, loginData)
 	if err != nil {
-		return LoginTokenResponse{}, err
+		return nil, err
 	}
 
 	err = e.checkUserRights(authResponse)
 	if err != nil {
-		return LoginTokenResponse{}, err
+		return nil, err
 	}
 
 	user, err := e.getOrCreateUser(ctx, authResponse)
 	if err != nil {
-		return LoginTokenResponse{}, err
+		return nil, err
 	}
 
 	token := createRandomToken()
 	_, err = e.servr.CreateSession(ctx, user.UserID, token)
 	if err != nil {
-		return LoginTokenResponse{}, fmt.Errorf("failed to create session: %w", err)
+		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	return LoginTokenResponse{Token: token}, nil
+	return &loginResult{
+		response: &data.LoginApiResponse{
+			Id:    user.UserID,
+			Login: user.Login,
+			Name:  user.Name,
+		},
+		token: token,
+	}, nil
 }
 
 func (e *PostLoginEndpoint) getLoginData(r *http.Request) (*data.LoginData, error) {

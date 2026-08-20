@@ -41,19 +41,19 @@ func (e *PostUpdateMediaEndpoint) Handle(w http.ResponseWriter, r *http.Request)
 	return nil
 }
 
-func (e *PostUpdateMediaEndpoint) process(ctx context.Context, r *http.Request) (data.SuccessResponse, error) {
+func (e *PostUpdateMediaEndpoint) process(ctx context.Context, r *http.Request) (*data.Media, error) {
 	token, err := getTokenFromRequest(r)
 	if err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("user not logged in")
+		return nil, fmt.Errorf("user not logged in")
 	}
 
 	userID, err := e.servr.ValidateToken(ctx, token)
 	if err != nil {
-		return data.SuccessResponse{}, err
+		return nil, err
 	}
 
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("failed to parse multipart form: %w", err)
+		return nil, fmt.Errorf("failed to parse multipart form: %w", err)
 	}
 	defer r.MultipartForm.RemoveAll()
 
@@ -77,9 +77,9 @@ func (e *PostUpdateMediaEndpoint) process(ctx context.Context, r *http.Request) 
 	return e.handleUpdateMedia(ctx, userID, req, file, fileHeader, hasFile)
 }
 
-func (e *PostUpdateMediaEndpoint) handleAddMedia(ctx context.Context, userID string, req UpdateMediaRequest, file io.ReadCloser, fileHeader *multipart.FileHeader, hasFile bool) (data.SuccessResponse, error) {
+func (e *PostUpdateMediaEndpoint) handleAddMedia(ctx context.Context, userID string, req UpdateMediaRequest, file io.ReadCloser, fileHeader *multipart.FileHeader, hasFile bool) (*data.Media, error) {
 	if !hasFile {
-		return data.SuccessResponse{}, fmt.Errorf("cannot add media without the actual content")
+		return nil, fmt.Errorf("cannot add media without the actual content")
 	}
 
 	description := req.Description
@@ -90,7 +90,7 @@ func (e *PostUpdateMediaEndpoint) handleAddMedia(ctx context.Context, userID str
 	detector := NewMediaTypeDetector()
 	contentType, fileReader, err := e.probeAndGetReader(file, detector)
 	if err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("failed to probe media: %w", err)
+		return nil, fmt.Errorf("failed to probe media: %w", err)
 	}
 
 	media := &data.Media{
@@ -101,16 +101,18 @@ func (e *PostUpdateMediaEndpoint) handleAddMedia(ctx context.Context, userID str
 	}
 
 	if err := e.servr.AddMedia(ctx, media); err != nil {
-		return data.SuccessResponse{}, err
+		return nil, err
 	}
 
 	fileSize, err := e.saveMediaFileStream(media.Id, fileReader)
 	if err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("failed to save media file: %w", err)
+		return nil, fmt.Errorf("failed to save media file: %w", err)
 	}
 
+	media.Size = fileSize
+
 	if err := e.servr.UpdateMediaSize(ctx, userID, media.Id, fileSize); err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("failed to update media size: %w", err)
+		return nil, fmt.Errorf("failed to update media size: %w", err)
 	}
 
 	if detector.IsVideo(contentType) {
@@ -124,50 +126,59 @@ func (e *PostUpdateMediaEndpoint) handleAddMedia(ctx context.Context, userID str
 				dims = prober.ProbeWebMDimensions(videoFile)
 			}
 			if dims.Valid {
+				media.Width = dims.Width
+				media.Height = dims.Height
 				if err := e.servr.UpdateMediaDimensions(ctx, userID, media.Id, dims.Width, dims.Height); err != nil {
-					return data.SuccessResponse{}, fmt.Errorf("failed to update media dimensions: %w", err)
+					return nil, fmt.Errorf("failed to update media dimensions: %w", err)
 				}
 			}
 		}
 	}
 
-	return data.SuccessResponse{Success: true}, nil
+	return media, nil
 }
 
-func (e *PostUpdateMediaEndpoint) handleUpdateMedia(ctx context.Context, userID string, req UpdateMediaRequest, file io.ReadCloser, fileHeader *multipart.FileHeader, hasFile bool) (data.SuccessResponse, error) {
+func (e *PostUpdateMediaEndpoint) handleUpdateMedia(ctx context.Context, userID string, req UpdateMediaRequest, file io.ReadCloser, fileHeader *multipart.FileHeader, hasFile bool) (*data.Media, error) {
 	existingMedia, err := e.servr.GetMedia(ctx, userID, req.Id)
 	if err != nil {
-		return data.SuccessResponse{}, err
+		return nil, err
 	}
 
 	if existingMedia == nil {
-		return data.SuccessResponse{}, fmt.Errorf("media not found")
+		return nil, fmt.Errorf("media not found")
 	}
+
+	existingMedia.Description = req.Description
 
 	if !hasFile {
 		if err := e.servr.UpdateMedia(ctx, userID, req.Id, req.Description); err != nil {
-			return data.SuccessResponse{}, err
+			return nil, err
 		}
-		return data.SuccessResponse{Success: true}, nil
+		return existingMedia, nil
 	}
 
 	detector := NewMediaTypeDetector()
 	contentType, fileReader, err := e.probeAndGetReader(file, detector)
 	if err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("failed to probe media: %w", err)
+		return nil, fmt.Errorf("failed to probe media: %w", err)
 	}
 
+	existingMedia.ContentType = contentType
+	existingMedia.Description = req.Description
+
 	if err := e.servr.UpdateMediaWithType(ctx, userID, req.Id, req.Description, contentType); err != nil {
-		return data.SuccessResponse{}, err
+		return nil, err
 	}
 
 	fileSize, err := e.saveMediaFileStream(req.Id, fileReader)
 	if err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("failed to save media file: %w", err)
+		return nil, fmt.Errorf("failed to save media file: %w", err)
 	}
 
+	existingMedia.Size = fileSize
+
 	if err := e.servr.UpdateMediaSize(ctx, userID, req.Id, fileSize); err != nil {
-		return data.SuccessResponse{}, fmt.Errorf("failed to update media size: %w", err)
+		return nil, fmt.Errorf("failed to update media size: %w", err)
 	}
 
 	if detector.IsVideo(contentType) {
@@ -181,18 +192,22 @@ func (e *PostUpdateMediaEndpoint) handleUpdateMedia(ctx context.Context, userID 
 				dims = prober.ProbeWebMDimensions(videoFile)
 			}
 			if dims.Valid {
+				existingMedia.Width = dims.Width
+				existingMedia.Height = dims.Height
 				if err := e.servr.UpdateMediaDimensions(ctx, userID, req.Id, dims.Width, dims.Height); err != nil {
-					return data.SuccessResponse{}, fmt.Errorf("failed to update media dimensions: %w", err)
+					return nil, fmt.Errorf("failed to update media dimensions: %w", err)
 				}
 			}
 		}
 	} else {
+		existingMedia.Width = 0
+		existingMedia.Height = 0
 		if err := e.servr.UpdateMediaDimensions(ctx, userID, req.Id, 0, 0); err != nil {
-			return data.SuccessResponse{}, fmt.Errorf("failed to reset media dimensions: %w", err)
+			return nil, fmt.Errorf("failed to reset media dimensions: %w", err)
 		}
 	}
 
-	return data.SuccessResponse{Success: true}, nil
+	return existingMedia, nil
 }
 
 func (e *PostUpdateMediaEndpoint) probeAndGetReader(src io.Reader, detector *MediaTypeDetector) (string, io.Reader, error) {

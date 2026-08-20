@@ -11,9 +11,9 @@ type Media struct {
 }
 
 type PlayList struct {
-	PlaylistId  string
-	UserId      string
-	Description string
+	PlaylistId  string `json:"playlistId"`
+	UserId      string `json:"userId"`
+	Description string `json:"description"`
 }
 
 type DescriptionUpdate struct {
