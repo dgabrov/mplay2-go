@@ -82,7 +82,7 @@ func (s *Servr) ValidateToken(ctx context.Context, token string) (string, error)
 	}
 	defer tx.Rollback()
 
-	userID, err := validateToken(ctx, tx, token)
+	userID, err := validateToken(ctx, tx, token, s.config.TokenValidity)
 	if err != nil {
 		return "", err
 	}

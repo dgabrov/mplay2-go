@@ -54,7 +54,7 @@ func createSession(ctx context.Context, tx *sql.Tx, userID, token string, tokenV
 	}, nil
 }
 
-func validateToken(ctx context.Context, tx *sql.Tx, token string) (string, error) {
+func validateToken(ctx context.Context, tx *sql.Tx, token string, tokenValidity int) (string, error) {
 	var userID string
 	var expiredInd string
 	var expiryDt time.Time
@@ -70,6 +70,13 @@ func validateToken(ctx context.Context, tx *sql.Tx, token string) (string, error
 
 	if expiredInd == "Y" || time.Now().After(expiryDt) {
 		return "", fmt.Errorf("invalid token or token expired")
+	}
+
+	newExpiryDt := time.Now().Add(time.Duration(tokenValidity) * time.Second)
+	updateQuery := "UPDATE session SET expiry_dt = ? WHERE token = ?"
+	_, err = tx.ExecContext(ctx, updateQuery, newExpiryDt, token)
+	if err != nil {
+		return "", fmt.Errorf("failed to update token expiry: %w", err)
 	}
 
 	return userID, nil
