@@ -1,26 +1,90 @@
-### Add new media (multipart request)
-# This demonstrates adding a new media file
-# Note: .http files have limited support for multipart; use curl command below instead
-# POST http://localhost:8080/mediaserv/updateMedia
-# Content-Type: multipart/form-data; boundary=----FormBoundary7MA4YWxkTrZu0gW
-#
-# ------FormBoundary7MA4YWxkTrZu0gW
-# Content-Disposition: form-data; name="data"
-#
-# {"adding": true, "id": "test-media-1", "description": "Test video"}
-# ------FormBoundary7MA4YWxkTrZu0gW
-# Content-Disposition: form-data; name="file"; filename="sample.mp4"
-# Content-Type: video/mp4
-#
-# < ./sample.mp4
-# ------FormBoundary7MA4YWxkTrZu0gW--
+### Step 1: Login to get session token
+# First obtain a session token by logging in
+POST http://localhost:8080/mediaserv/login
+Content-Type: application/json
 
-### Update media description only (no file)
-# POST http://localhost:8080/mediaserv/updateMedia
-# Content-Type: multipart/form-data; boundary=----FormBoundary7MA4YWxkTrZu0gW
-#
-# ------FormBoundary7MA4YWxkTrZu0gW
-# Content-Disposition: form-data; name="data"
-#
-# {"adding": false, "id": "test-media-1", "description": "Updated description"}
-# ------FormBoundary7MA4YWxkTrZu0gW--
+{
+  "login": "test1",
+  "password": "test1"
+}
+
+###
+
+### Step 2: Add new media with file (requires login token from step 1)
+# This adds a new media file with automatic content type detection
+# The endpoint will:
+# - Probe the file to detect it's a video
+# - Store the file size in bytes
+# - Extract video width and height
+# - Set content_type to "video"
+# Replace the token value with the actual token from login
+POST http://localhost:8080/mediaserv/updateMedia
+Cookie: token=YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="data"
+Content-Type: application/json
+
+{"adding": true, "id": "video-001", "description": "Sample Video"}
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="sample.mp4"
+Content-Type: video/mp4
+
+< ./sample.mp4
+------WebKitFormBoundary--
+
+###
+
+### Step 3: Add new media without description (auto-fills from filename)
+# Description will be auto-filled as "sample" (filename without extension)
+POST http://localhost:8080/mediaserv/updateMedia
+Cookie: token=YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="data"
+Content-Type: application/json
+
+{"adding": true, "id": "video-002"}
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="sample.mp4"
+Content-Type: video/mp4
+
+< ./sample.mp4
+------WebKitFormBoundary--
+
+###
+
+### Step 4: Update media description only (no file)
+# Updates only the description, file and dimensions remain unchanged
+POST http://localhost:8080/mediaserv/updateMedia
+Cookie: token=YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="data"
+Content-Type: application/json
+
+{"adding": false, "id": "video-001", "description": "Updated Video Description"}
+------WebKitFormBoundary--
+
+###
+
+### Step 5: Update media with new file
+# Replaces the file, updates description, and re-probes for dimensions
+POST http://localhost:8080/mediaserv/updateMedia
+Cookie: token=YOUR_TOKEN_HERE
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="data"
+Content-Type: application/json
+
+{"adding": false, "id": "video-001", "description": "Replaced with new video"}
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="sample.mp4"
+Content-Type: video/mp4
+
+< ./sample.mp4
+------WebKitFormBoundary--
