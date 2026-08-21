@@ -25,9 +25,6 @@ func getUserByProvidedId(ctx context.Context, tx *sql.Tx, providedUserID string)
 }
 
 func createUser(ctx context.Context, tx *sql.Tx, user *data.User) error {
-	if user.UserID == "" {
-		user.UserID = uuid.Must(uuid.NewV7()).String()
-	}
 	query := "INSERT INTO user (user_id, provided_user_id, login, name) VALUES (?, ?, ?, ?)"
 	_, err := tx.ExecContext(ctx, query, user.UserID, user.ProvidedUserID, user.Login, user.Name)
 	if err != nil {
@@ -290,10 +287,6 @@ func deletePlaylist(ctx context.Context, tx *sql.Tx, playlistIds []string) (int,
 }
 
 func addPlaylist(ctx context.Context, tx *sql.Tx, playlist *data.PlayList) error {
-	if playlist.PlaylistId == "" {
-		playlist.PlaylistId = uuid.Must(uuid.NewV7()).String()
-	}
-
 	query := "INSERT INTO playlist (playlist_id, user_id, description) VALUES (?, ?, ?)"
 	_, err := tx.ExecContext(ctx, query, playlist.PlaylistId, playlist.UserId, playlist.Description)
 	if err != nil {
@@ -472,10 +465,6 @@ func addMediaToPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID stri
 }
 
 func addMedia(ctx context.Context, tx *sql.Tx, media *data.Media) error {
-	if media.Id == "" {
-		media.Id = uuid.Must(uuid.NewV7()).String()
-	}
-
 	query := "INSERT INTO media (media_id, user_id, description, content_type, size, width, height) VALUES (?, ?, ?, ?, ?, ?, ?)"
 	_, err := tx.ExecContext(ctx, query, media.Id, media.UserId, media.Description, media.ContentType, media.Size, media.Width, media.Height)
 	if err != nil {
