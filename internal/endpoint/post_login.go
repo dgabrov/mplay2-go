@@ -11,6 +11,7 @@ import (
 
 	"github.com/amanagement24/mplay2-go/internal/data"
 	"github.com/amanagement24/mplay2-go/internal/service"
+	"github.com/google/uuid"
 )
 
 type PostLoginEndpoint struct {
@@ -140,6 +141,7 @@ func (e *PostLoginEndpoint) getOrCreateUser(ctx context.Context, authResponse *d
 	}
 
 	newUser := &data.User{
+		UserID:         uuid.Must(uuid.NewV7()).String(),
 		ProvidedUserID: authResponse.Id,
 		Login:          authResponse.Login,
 		Name:           authResponse.Name,

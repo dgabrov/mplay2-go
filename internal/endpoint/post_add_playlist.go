@@ -45,6 +45,7 @@ func (e *PostAddPlaylistEndpoint) process(ctx context.Context, r *http.Request) 
 	}
 
 	playlist := &data.PlayList{
+		PlaylistId:  update.Id,
 		UserId:      userID,
 		Description: update.Description,
 	}
