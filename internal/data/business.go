@@ -10,6 +10,17 @@ type Media struct {
 	Height      int    `json:"height"`
 }
 
+type ExtendedMedia struct {
+	Id          string `json:"id"`
+	UserId      string `json:"userId"`
+	Description string `json:"description"`
+	ContentType string `json:"contentType"`
+	Size        int64  `json:"size"`
+	Width       int    `json:"width"`
+	Height      int    `json:"height"`
+	SeqNo       int    `json:"seqNo"`
+}
+
 type PlayList struct {
 	PlaylistId  string `json:"playlistId"`
 	UserId      string `json:"userId"`

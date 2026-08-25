@@ -306,8 +306,8 @@ func updatePlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID, descrip
 	return nil
 }
 
-func getMediaForPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID string) ([]*data.Media, error) {
-	query := `SELECT m.media_id, m.user_id, m.description, m.content_type, m.size, m.width, m.height
+func getMediaForPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID string) ([]*data.ExtendedMedia, error) {
+	query := `SELECT m.media_id, m.user_id, m.description, m.content_type, m.size, m.width, m.height, mp.seq_no
 	FROM media m
 	INNER JOIN media_playlist mp ON m.media_id = mp.media_id
 	WHERE mp.playlist_id = ? AND m.user_id = ?
@@ -319,10 +319,10 @@ func getMediaForPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID str
 	}
 	defer rows.Close()
 
-	var results []*data.Media
+	var results []*data.ExtendedMedia
 	for rows.Next() {
-		var m data.Media
-		err := rows.Scan(&m.Id, &m.UserId, &m.Description, &m.ContentType, &m.Size, &m.Width, &m.Height)
+		var m data.ExtendedMedia
+		err := rows.Scan(&m.Id, &m.UserId, &m.Description, &m.ContentType, &m.Size, &m.Width, &m.Height, &m.SeqNo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan media: %w", err)
 		}

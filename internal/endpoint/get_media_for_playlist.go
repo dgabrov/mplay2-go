@@ -27,7 +27,7 @@ func (e *GetMediaForPlaylistEndpoint) Handle(w http.ResponseWriter, r *http.Requ
 	return nil
 }
 
-func (e *GetMediaForPlaylistEndpoint) process(ctx context.Context, r *http.Request) ([]*data.Media, error) {
+func (e *GetMediaForPlaylistEndpoint) process(ctx context.Context, r *http.Request) ([]*data.ExtendedMedia, error) {
 	token, err := getTokenFromRequest(r)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (e *GetMediaForPlaylistEndpoint) process(ctx context.Context, r *http.Reque
 	}
 
 	if media == nil {
-		media = make([]*data.Media, 0)
+		media = make([]*data.ExtendedMedia, 0)
 	}
 
 	return media, nil
