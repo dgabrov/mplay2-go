@@ -426,3 +426,21 @@ func (s *Servr) UpdateMediaDimensions(ctx context.Context, userID, mediaID strin
 
 	return nil
 }
+
+func (s *Servr) SwitchMediaSequence(ctx context.Context, userID, playlistID, media1ID, media2ID string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := switchMediaSequence(ctx, tx, userID, playlistID, media1ID, media2ID); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}

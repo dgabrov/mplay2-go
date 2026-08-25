@@ -48,3 +48,9 @@ type RemoveMediaFromPlaylistRequest struct {
 	PlaylistId string   `json:"playlistId"`
 	Ids        []string `json:"ids"`
 }
+
+type SwitchSeqRequest struct {
+	PlaylistId string `json:"playlistId"`
+	Media1     string `json:"media1"`
+	Media2     string `json:"media2"`
+}

@@ -526,3 +526,60 @@ func updateMediaDimensions(ctx context.Context, tx *sql.Tx, userID, mediaID stri
 
 	return nil
 }
+
+func switchMediaSequence(ctx context.Context, tx *sql.Tx, userID, playlistID, media1ID, media2ID string) error {
+	// Verify playlist belongs to user
+	var count int
+	query := "SELECT COUNT(*) FROM playlist WHERE playlist_id = ? AND user_id = ?"
+	err := tx.QueryRowContext(ctx, query, playlistID, userID).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to verify playlist ownership: %w", err)
+	}
+
+	if count == 0 {
+		return fmt.Errorf("playlist does not belong to this user or does not exist")
+	}
+
+	// Get seq_no for both media items
+	var seq1, seq2 int64
+	query = "SELECT seq_no FROM media_playlist WHERE playlist_id = ? AND media_id = ?"
+	err = tx.QueryRowContext(ctx, query, playlistID, media1ID).Scan(&seq1)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("media1 is not part of this playlist")
+		}
+		return fmt.Errorf("failed to get media1 sequence: %w", err)
+	}
+
+	err = tx.QueryRowContext(ctx, query, playlistID, media2ID).Scan(&seq2)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("media2 is not part of this playlist")
+		}
+		return fmt.Errorf("failed to get media2 sequence: %w", err)
+	}
+
+	// Use intermediary value to switch sequences
+	intermediaryValue := int64(-9999)
+
+	// Update media1 to intermediary value
+	updateQuery := "UPDATE media_playlist SET seq_no = ? WHERE playlist_id = ? AND media_id = ?"
+	_, err = tx.ExecContext(ctx, updateQuery, intermediaryValue, playlistID, media1ID)
+	if err != nil {
+		return fmt.Errorf("failed to update media1 sequence: %w", err)
+	}
+
+	// Update media2 to media1's old seq_no
+	_, err = tx.ExecContext(ctx, updateQuery, seq1, playlistID, media2ID)
+	if err != nil {
+		return fmt.Errorf("failed to update media2 sequence: %w", err)
+	}
+
+	// Update media1 to media2's old seq_no
+	_, err = tx.ExecContext(ctx, updateQuery, seq2, playlistID, media1ID)
+	if err != nil {
+		return fmt.Errorf("failed to finalize media1 sequence: %w", err)
+	}
+
+	return nil
+}

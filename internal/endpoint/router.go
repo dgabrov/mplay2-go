@@ -23,6 +23,7 @@ func RegisterRoutes(mux *http.ServeMux, context string, config *data.ConfigData,
 	mux.HandleFunc(fmt.Sprintf("POST %s/updatePlaylist", context), wrapHandler(NewPostUpdatePlaylistEndpoint(servr)))
 	mux.HandleFunc(fmt.Sprintf("POST %s/removeMediaFromPlaylist", context), wrapHandler(NewPostRemoveMediaFromPlaylistEndpoint(servr)))
 	mux.HandleFunc(fmt.Sprintf("POST %s/addMediaToPlaylist", context), wrapHandler(NewPostAddMediaToPlaylistEndpoint(servr)))
+	mux.HandleFunc(fmt.Sprintf("POST %s/switchSeq", context), wrapHandler(NewPostSwitchSeqEndpoint(servr)))
 }
 
 func wrapHandler(h Handler) http.HandlerFunc {
