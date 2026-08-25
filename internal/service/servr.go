@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/amanagement24/mplay2-go/internal/data"
 )
 
@@ -261,7 +262,7 @@ func (s *Servr) UpdatePlaylist(ctx context.Context, userID, playlistID, descript
 	return nil
 }
 
-func (s *Servr) GetMediaForPlaylist(ctx context.Context, userID, playlistID string) ([]*data.Media, error) {
+func (s *Servr) GetMediaForPlaylist(ctx context.Context, userID, playlistID string) ([]*data.ExtendedMedia, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -421,6 +422,24 @@ func (s *Servr) UpdateMediaDimensions(ctx context.Context, userID, mediaID strin
 	}
 
 	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Servr) SwitchMediaSequence(ctx context.Context, userID, playlistID, media1ID, media2ID string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err = switchMediaSequence(ctx, tx, userID, playlistID, media1ID, media2ID); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 

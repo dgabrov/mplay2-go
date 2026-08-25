@@ -306,8 +306,8 @@ func updatePlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID, descrip
 	return nil
 }
 
-func getMediaForPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID string) ([]*data.Media, error) {
-	query := `SELECT m.media_id, m.user_id, m.description, m.content_type, m.size, m.width, m.height
+func getMediaForPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID string) ([]*data.ExtendedMedia, error) {
+	query := `SELECT m.media_id, m.user_id, m.description, m.content_type, m.size, m.width, m.height, mp.seq_no
 	FROM media m
 	INNER JOIN media_playlist mp ON m.media_id = mp.media_id
 	WHERE mp.playlist_id = ? AND m.user_id = ?
@@ -319,10 +319,10 @@ func getMediaForPlaylist(ctx context.Context, tx *sql.Tx, userID, playlistID str
 	}
 	defer rows.Close()
 
-	var results []*data.Media
+	var results []*data.ExtendedMedia
 	for rows.Next() {
-		var m data.Media
-		err := rows.Scan(&m.Id, &m.UserId, &m.Description, &m.ContentType, &m.Size, &m.Width, &m.Height)
+		var m data.ExtendedMedia
+		err := rows.Scan(&m.Id, &m.UserId, &m.Description, &m.ContentType, &m.Size, &m.Width, &m.Height, &m.SeqNo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan media: %w", err)
 		}
@@ -522,6 +522,63 @@ func updateMediaDimensions(ctx context.Context, tx *sql.Tx, userID, mediaID stri
 	_, err := tx.ExecContext(ctx, query, width, height, mediaID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to update media dimensions: %w", err)
+	}
+
+	return nil
+}
+
+func switchMediaSequence(ctx context.Context, tx *sql.Tx, userID, playlistID, media1ID, media2ID string) error {
+	// Verify playlist belongs to user
+	var count int
+	query := "SELECT COUNT(*) FROM playlist WHERE playlist_id = ? AND user_id = ?"
+	err := tx.QueryRowContext(ctx, query, playlistID, userID).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to verify playlist ownership: %w", err)
+	}
+
+	if count == 0 {
+		return fmt.Errorf("playlist does not belong to this user or does not exist")
+	}
+
+	// Get seq_no for both media items
+	var seq1, seq2 int64
+	query = "SELECT seq_no FROM media_playlist WHERE playlist_id = ? AND media_id = ?"
+	err = tx.QueryRowContext(ctx, query, playlistID, media1ID).Scan(&seq1)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("media1 is not part of this playlist")
+		}
+		return fmt.Errorf("failed to get media1 sequence: %w", err)
+	}
+
+	err = tx.QueryRowContext(ctx, query, playlistID, media2ID).Scan(&seq2)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("media2 is not part of this playlist")
+		}
+		return fmt.Errorf("failed to get media2 sequence: %w", err)
+	}
+
+	// Use intermediary value to switch sequences
+	intermediaryValue := int64(-9999)
+
+	// Update media1 to intermediary value
+	updateQuery := "UPDATE media_playlist SET seq_no = ? WHERE playlist_id = ? AND media_id = ?"
+	_, err = tx.ExecContext(ctx, updateQuery, intermediaryValue, playlistID, media1ID)
+	if err != nil {
+		return fmt.Errorf("failed to update media1 sequence: %w", err)
+	}
+
+	// Update media2 to media1's old seq_no
+	_, err = tx.ExecContext(ctx, updateQuery, seq1, playlistID, media2ID)
+	if err != nil {
+		return fmt.Errorf("failed to update media2 sequence: %w", err)
+	}
+
+	// Update media1 to media2's old seq_no
+	_, err = tx.ExecContext(ctx, updateQuery, seq2, playlistID, media1ID)
+	if err != nil {
+		return fmt.Errorf("failed to finalize media1 sequence: %w", err)
 	}
 
 	return nil
