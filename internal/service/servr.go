@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/amanagement24/mplay2-go/internal/data"
 )
 
@@ -434,11 +435,11 @@ func (s *Servr) SwitchMediaSequence(ctx context.Context, userID, playlistID, med
 	}
 	defer tx.Rollback()
 
-	if err := switchMediaSequence(ctx, tx, userID, playlistID, media1ID, media2ID); err != nil {
+	if err = switchMediaSequence(ctx, tx, userID, playlistID, media1ID, media2ID); err != nil {
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 
